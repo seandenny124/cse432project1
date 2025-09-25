@@ -1,0 +1,66 @@
+//=============================================================================================================
+// MaxFinder_genSize — Instruction-Optimized (Start @ 00)
+// Authors: Sean Denny (CSE 432), Alex Anta (ECE 432), Matthew Saxton (CSE 432), Diego Chavolla-Ortiz (CSE 432)
+//=============================================================================================================
+//
+// Description:
+// Given n inputs at address 0xFF, write the maximum to 0xFF - (n+2).
+//
+// Layout & constants (same as your example):
+//   ZERO = F3 (preload 0)
+//   +1   = A2 (preload 1)
+//   FFVAL = F7 (preload 0x00FF)
+//   Working cells: F6 (N), F0 (START), F1 (END), A0 (PTR), 85 (MAXBUF), F4 (TMP)
+//
+// How to run:
+// 1) Put n at 0xFF.
+// 2) Put the n data values at 0xFF-(n+1) .. 0xFF-1.
+// 3) Run from 0x00. On HALT, max is written to 0xFF-(n+2).
+//
+// NOTE: Addresses 13 and 1D are reserved padding (set to 12'b0 in the .mem).
+//=============================================================================================================
+
+00: LOAD  FF          // ACC = n
+01: JZ    24          // if n == 0 → handle zero case
+02: STORE F6          // N = n
+03: LOAD  F7          // FFVAL = 0x00FF (preloaded)
+04: SUB   F6          // 0xFF - n
+05: STORE F0          // START
+06: LOADI F0          // *START = X0
+07: STORE 85          // MAXBUF
+08: LOAD  F0
+09: ADD   A2
+0A: STORE A0          // A0 = PTR = START + 1
+0B: LOAD  F0
+0C: ADD   F6
+0D: STORE F1          // END = START + n
+0E: LOAD  A0
+0F: SUB   F1
+10: JZ    1E          // PTR == END → done
+11: JN    14          // PTR < END  → loop body
+12: JMP   1E          // safety if PTR > END
+
+13: ; (padding — keep this address empty; encoded as 000000000000 in .mem)
+
+14: LOADI A0          // CAND = *PTR
+15: SUB   85          // CAND - MAX
+16: JN    19          // if negative, skip update
+17: LOADI A0
+18: STORE 85          // MAX = CAND
+19: LOAD  A0          // PTR++
+1A: ADD   A2
+1B: STORE A0
+1C: JMP   0E          // loop
+
+1D: ; (padding — keep this address empty; encoded as 000000000000 in .mem)
+
+1E: LOAD  F0          // START
+1F: SUB   A2          // START - 1
+20: STORE F4          // TMP = result address
+21: LOAD  85
+22: STOREI F4         // MEM[TMP] = MAX
+23: HALT
+
+24: LOAD  F3          // ZERO
+25: STORE FD
+26: HALT

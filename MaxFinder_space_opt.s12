@@ -1,0 +1,57 @@
+//=============================================================================================================
+// MaxFinder_genSize — Space-Optimized
+// Authors: Sean Denny (CSE 432), Alex Anta (ECE 432), Matthew Saxton (CSE 432), Diego Chavolla-Ortiz (CSE 432)
+//=============================================================================================================
+//
+// Description:
+// Given n inputs at address 0xFF, write the maximum to 0xFF - (n+2).
+//
+// How to run:
+// 1) Put n (the number of elements) at address 0xFF.
+// 2) Put the n data values at addresses: 0xFF-(n+1) .. 0xFF-1 (lowest to highest).
+// 3) Press Run. On HALT, the max is written to 0xFF-(n+2).
+//
+// Notes:
+// - Uses ZERO @ F3 (preload 0), +1 constant @ A2 (preload 1), FFVAL @ F7 (preload 0x00FF).
+// - Working registers/cells: F6 (N), F0 (START), A0 (PTR), A1 (COUNTER), 85 (MAXBUF), F4 (TMP).
+// - N may be as large as memory layout allows. With this scheme, you can set n up to the largest
+//   block you can physically place below 0xFF while keeping constants intact.
+//
+//------------------------------------------------------------------------------------------------------------
+
+00: LOAD FF          // ACC = n
+01: JZ 22            // if n == 0 → handle zero case
+02: STORE F6         // N = n
+03: LOAD F7          // FFVAL = 0x00FF (preloaded in data)
+04: SUB F6           // 0xFF - n
+05: STORE F0         // START = 0xFF - n
+06: LOADI F0         // *START = X0
+07: STORE 85         // MAXBUF (use 0x85 as a working max buffer)
+08: LOAD F0
+09: ADD A2           // A2 must be +1 (preload in data)
+0A: STORE A0         // A0 = PTR = START + 1
+0B: LOAD F6
+0C: SUB A2
+0D: STORE A1         // A1 = COUNTER = n - 1
+0E: LOADI A0         // CAND = *PTR
+0F: SUB 85           // CAND - MAX
+10: JN 13            // if negative, keep MAX
+11: LOADI A0
+12: STORE 85         // MAX = CAND
+13: LOAD A1          // COUNTER--
+14: SUB A2
+15: STORE A1
+16: JZ 1B            // done if zero
+17: LOAD A0          // PTR++
+18: ADD A2
+19: STORE A0
+1A: JMP 0E
+1B: LOAD F0          // START
+1C: SUB A2           // START - 1
+1D: STORE F4         // TMP = result address
+1E: LOAD 85          // MAXBUF
+1F: STOREI F4        // MEM[TMP] = MAX
+20: HALT
+22: LOAD ZERO        // ZERO must be preloaded with 0 (we map ZERO=F3)
+23: STORE FD
+24: HALT
