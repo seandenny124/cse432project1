@@ -149,7 +149,7 @@ public class S12_IL implements S12_IL_Interface {
                 acc = mem[ptr] & WORD_MASK;
                 break;
             }
-            case 0x7: { // STOREI   <-- missing before
+            case 0x7: { // STOREI  
                 int ptr = mem[u8(operand)] & ADDR_MASK;
                 mem[ptr] = acc & WORD_MASK;
                 break;
@@ -163,29 +163,25 @@ public class S12_IL implements S12_IL_Interface {
                 break;
             }
             case 0x8: { // JZ
-                // Zero test on signed-normalized value (0 is same signed/unsigned)
                 if ( (acc & WORD_MASK) == 0 ) pc = u8(operand);
                 break;
             }
-            case 0x9: { // JN       <-- missing before
-                // Negative if bit 11 set after normalization
+            case 0x9: { // JN       
                 if ( to12(acc) < 0 ) pc = u8(operand);
                 break;
             }
-            case 0xA: { // JMP      <-- missing before
+            case 0xA: { // JMP      
                 pc = u8(operand);
                 break;
             }
             case 0xF: { // HALT
-                // Keep PC on HALT instruction (or back up one if you prefer).
-                pc = (pc - 1) & ADDR_MASK;  // matches your earlier behavior
+                pc = (pc - 1) & ADDR_MASK;  
                 break;
             }
             default:
-                // NOP for unknown opcodes (or throw if you prefer strictness)
                 break;
         }
-        acc &= WORD_MASK; // keep ACC 12-bit after every step
+        acc &= WORD_MASK;
     }
 
     private static String stripComment(String line) {

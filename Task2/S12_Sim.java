@@ -27,7 +27,6 @@ public class S12_Sim {
                     if (i + 1 >= args.length) { usage(); return; }
                     try { 
                         maxCycles = Integer.parseInt(args[++i]); }
-                        //if (maxCycles <= 0) { System.out.println("Invalid cycle count >=0 " + args[i]); return; }
                     catch (NumberFormatException e) { 
                         System.out.println(e); return; 
                         }
