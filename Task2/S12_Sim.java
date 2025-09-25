@@ -1,10 +1,8 @@
 // ──────────────────────────────────────────────────────────────────────────────
 // File: S12_Sim.java
-// Purpose: CLI runner per spec — reads .mem, runs until HALT or -c cycles,
-//          writes <base>_memOut and <base>_trace, prints summary to console.
+// Authors: Sean Denny (CSE 432), Diego Chavolla-Ortiz (CSE 432), Alex Anta (ECE 432) Matthew Saxton (CSE 432)
 // ──────────────────────────────────────────────────────────────────────────────
 
-import java.io.*;
 import java.util.*;
 
 public class S12_Sim {
@@ -16,10 +14,9 @@ public class S12_Sim {
         if (args.length < 1) { usage(); return; }
 
         String memFile = null;
-        String outBase = null; // defaults to input base name without extension
-        Integer maxCycles = null; // optional cap
+        String outBase = null; 
+        Integer maxCycles = null; 
 
-        // ── Parse CLI ──
         for (int i = 0; i < args.length; i++) {
             switch (args[i]) {
                 case "-o":
@@ -28,40 +25,42 @@ public class S12_Sim {
                     break;
                 case "-c":
                     if (i + 1 >= args.length) { usage(); return; }
-                    try { maxCycles = Integer.parseInt(args[++i]); }
-                    catch (NumberFormatException e) { System.err.println("-c needs an integer"); return; }
+                    try { 
+                        maxCycles = Integer.parseInt(args[++i]); }
+                        //if (maxCycles <= 0) { System.out.println("Invalid cycle count >=0 " + args[i]); return; }
+                    catch (NumberFormatException e) { 
+                        System.out.println(e); return; 
+                        }
                     break;
                 default:
                     if (memFile == null) memFile = args[i];
-                    else { System.err.println("Unexpected arg: " + args[i]); usage(); return; }
+                    else { System.out.println("Unexpected arg: " + args[i]); usage(); return; }
             }
         }
         if (memFile == null) { usage(); return; }
+
+        
 
         if (outBase == null) outBase = deriveBase(memFile);
         String memOut = outBase + "_memOut";
         String traceOut = outBase + "_trace";
 
-        // ── Run ──
         S12_IL_Interface cpu = new S12_IL();
         if (!cpu.intializeMem(memFile)) {
-            System.err.println("Failed to initialize memory from: " + memFile);
+            System.out.println("Failed to initialize memory from: " + memFile);
             return;
         }
 
         int cycles = 0;
         boolean halted = false;
         while (true) {
-            String[] st = cpu.getProcessorState(); // [pcBin, accBin]
+            String[] st = cpu.getProcessorState(); 
 
-            // Peek the current instruction to detect HALT (optional – conservative)
-            // We rely on update() executing and our IL's HALT semantics.
             String instrBits = cpu.update();
             cycles++;
 
-            // Our IL marks HALT by not advancing PC (see executeStep).
             String[] st2 = cpu.getProcessorState();
-            if (st[0].equals(st2[0]) && instrBits.startsWith("1111")) { // opcode 0xF
+            if (st[0].equals(st2[0]) && instrBits.startsWith("1111")) { 
                 halted = true;
             }
 
@@ -69,15 +68,13 @@ public class S12_Sim {
             if (maxCycles != null && cycles >= maxCycles) break;
         }
 
-        // ── Output files ──
         if (!cpu.writeMem(memOut)) {
-            System.err.println("Failed to write memOut: " + memOut);
+            System.out.println("Failed to write memOut: " + memOut);
         }
         if (!cpu.writeTrace(traceOut)) {
-            System.err.println("Failed to write trace: " + traceOut);
+            System.out.println("Failed to write trace: " + traceOut);
         }
 
-        // ── Console summary ──
         String[] finalState = cpu.getProcessorState();
         System.out.println("Cycles Executed: " + cycles);
         System.out.println("PC: 0x" + bin8ToHex2(finalState[0]));
